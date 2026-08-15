@@ -14,7 +14,29 @@ pwd_context = CryptContext(
 )
 
 
+def _prepare_password(password: str) -> str:
+    """
+    bcrypt has a maximum password length of 72 bytes.
+    UTF-8 encoding is used because characters can occupy
+    more than one byte.
+    """
+    password_bytes = password.encode("utf-8")
+
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+
+        # Avoid cutting a multi-byte UTF-8 character in half.
+        while True:
+            try:
+                return password_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                password_bytes = password_bytes[:-1]
+
+    return password
+
+
 def hash_password(password: str) -> str:
+    password = _prepare_password(password)
     return pwd_context.hash(password)
 
 
@@ -22,6 +44,8 @@ def verify_password(
     plain_password: str,
     hashed_password: str,
 ) -> bool:
+    plain_password = _prepare_password(plain_password)
+
     return pwd_context.verify(
         plain_password,
         hashed_password,

@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 import hashlib
+import bcrypt
 
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 
 SECRET_KEY = "tasknest-development-secret-change-in-production"
@@ -10,23 +10,26 @@ SECRET_KEY = "tasknest-development-secret-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-)
 
-
-def _prepare_password(password: str) -> str:
-    # Always convert the user's password to a fixed 64-character
-    # SHA-256 hexadecimal string before bcrypt sees it.
+def _prepare_password(password: str) -> bytes:
+    """
+    Convert the password to SHA-256 first so bcrypt
+    never receives a password longer than its 72-byte limit.
+    """
     return hashlib.sha256(
         password.encode("utf-8")
-    ).hexdigest()
+    ).hexdigest().encode("utf-8")
 
 
 def hash_password(password: str) -> str:
     prepared_password = _prepare_password(password)
-    return pwd_context.hash(prepared_password)
+
+    hashed = bcrypt.hashpw(
+        prepared_password,
+        bcrypt.gensalt(),
+    )
+
+    return hashed.decode("utf-8")
 
 
 def verify_password(
@@ -35,9 +38,9 @@ def verify_password(
 ) -> bool:
     prepared_password = _prepare_password(plain_password)
 
-    return pwd_context.verify(
+    return bcrypt.checkpw(
         prepared_password,
-        hashed_password,
+        hashed_password.encode("utf-8"),
     )
 
 

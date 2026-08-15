@@ -13,18 +13,13 @@ app = FastAPI(
     description="Backend API for TaskNest Task Scheduling Tool",
     version="1.0.0",
 )
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://tasknest-web.onrender.com",
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 app.include_router(auth_router)
 app.include_router(task_router)
 

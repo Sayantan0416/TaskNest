@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "https://tasknest-raul.onrender.com";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);

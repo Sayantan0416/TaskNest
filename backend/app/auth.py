@@ -1,12 +1,15 @@
 from datetime import datetime, timedelta, timezone
+import hashlib
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+
 
 SECRET_KEY = "tasknest-development-secret-change-in-production"
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+
 
 pwd_context = CryptContext(
     schemes=["bcrypt"],
@@ -16,38 +19,29 @@ pwd_context = CryptContext(
 
 def _prepare_password(password: str) -> str:
     """
-    bcrypt has a maximum password length of 72 bytes.
-    UTF-8 encoding is used because characters can occupy
-    more than one byte.
+    Convert the password to a fixed-length SHA-256 hexadecimal string
+    before passing it to bcrypt.
+
+    This avoids bcrypt's 72-byte password limitation.
     """
-    password_bytes = password.encode("utf-8")
-
-    if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-
-        # Avoid cutting a multi-byte UTF-8 character in half.
-        while True:
-            try:
-                return password_bytes.decode("utf-8")
-            except UnicodeDecodeError:
-                password_bytes = password_bytes[:-1]
-
-    return password
+    return hashlib.sha256(
+        password.encode("utf-8")
+    ).hexdigest()
 
 
 def hash_password(password: str) -> str:
-    password = _prepare_password(password)
-    return pwd_context.hash(password)
+    prepared_password = _prepare_password(password)
+    return pwd_context.hash(prepared_password)
 
 
 def verify_password(
     plain_password: str,
     hashed_password: str,
 ) -> bool:
-    plain_password = _prepare_password(plain_password)
+    prepared_password = _prepare_password(plain_password)
 
     return pwd_context.verify(
-        plain_password,
+        prepared_password,
         hashed_password,
     )
 

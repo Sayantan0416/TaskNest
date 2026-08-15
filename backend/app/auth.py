@@ -10,7 +10,6 @@ SECRET_KEY = "tasknest-development-secret-change-in-production"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-
 pwd_context = CryptContext(
     schemes=["bcrypt"],
     deprecated="auto",
@@ -18,12 +17,8 @@ pwd_context = CryptContext(
 
 
 def _prepare_password(password: str) -> str:
-    """
-    Convert the password to a fixed-length SHA-256 hexadecimal string
-    before passing it to bcrypt.
-
-    This avoids bcrypt's 72-byte password limitation.
-    """
+    # Always convert the user's password to a fixed 64-character
+    # SHA-256 hexadecimal string before bcrypt sees it.
     return hashlib.sha256(
         password.encode("utf-8")
     ).hexdigest()
